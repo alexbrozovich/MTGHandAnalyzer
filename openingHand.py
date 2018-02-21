@@ -68,7 +68,8 @@ def writeCSV(filename, permissions, header, rows_to_write):
             writer.writerow(item)
         
         
-    
+##takes in the array of wins and losses in text
+##returns total wins and total losses as integers
 def getWinsLosses(winLoss):
     wins = 0
     losses = 0
@@ -79,6 +80,8 @@ def getWinsLosses(winLoss):
             losses += 1
     return wins, losses
 
+##takes in cardDict and an array of all opening hands
+##returns cardDict with the total number of opening hands at position 0 for each card
 def getHandsWithCards(cardDict, handsFromDeck):
     for line in handsFromDeck:
         hasCard = 0
@@ -107,7 +110,7 @@ def getWinsWithCards(cardDict, handsFromDeck, winLoss):
             cardDict[item][3] = 100.00
     return cardDict
                          
-def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
+def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards, printStuff, exportStuff):
     wins, losses = getWinsLosses(winLoss)
     winPercentage = long(wins) / (long(wins)+long(losses))
     ##0: number of hands with that card
@@ -128,18 +131,12 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     for item in commonHands:
         winningHands[item[0]] = item[1][3]
     winningHandsSorted = sorted(winningHands.items(), key=operator.itemgetter(1), reverse=True)
-    print "Deck: ".upper() + chosenDeck
-    print "Overall Game Win Percentage: " + str(round(winPercentage, 4)*100) + "%"
-    print "Total Games Played: " + str(len(handsFromDeck))
-    print "\n"
-    print "Cards sorted by % of kept hands that contain them:".upper()
     for item in commonHands:
         commonHandPretty.append([item[0],round(long(item[1][0])/long(len(handsFromDeck)),4)*100])
     for item in commonHandPretty:
         ##print item[0] + ": " + str(item[1]) + "%"
         commonHandRows.append([item[0],str(item[1])+"%\n"])
-    print "\n"
-    print "Cards sorted by win % of hands that contain them, total # of hands, +/- average win %:".upper()
+    winningHandsSortedPrinter = ""
     for item in winningHandsSorted:
         plusMinus = ""
         relWin = cardDict[item[0]][3] - (winPercentage * 100)
@@ -147,10 +144,8 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
             plusMinus = "-"
         else:
             plusMinus = "+"
-        ##print item[0] + ": " + str(item[1]) + "%, " + str(cardDict[item[0]][0]) + ", " + plusMinus + str(round(abs(relWin),2)) + "%"
+        winningHandsSortedPrinter += item[0] + ": " + str(item[1]) + "%, " + str(cardDict[item[0]][0]) + ", " + plusMinus + str(round(abs(relWin),2)) + "%" + "\n"
         winningHandRows.append([item[0],str(item[1])+"%",str(cardDict[item[0]][0]),plusMinus + str(round(abs(relWin),2))+"%\n"])
-    print "\n"
-    print "% of games with > 0 mulligans:"
     totalMulls = 0
     for line in handsFromDeck:
         didMull = 0
@@ -158,9 +153,6 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
             if item == "":
                  didMull = 1
         totalMulls += didMull
-    print round(long(totalMulls) / long(len(handsFromDeck)),4)*100
-    print "\n"
-    print "Win % by # of mulligans, # of games with # of mulligans: "
     winsByMull = [0,0,0,0,0,0,0,0]
     gamesByMull = [0,0,0,0,0,0,0,0]
     i = 0
@@ -174,29 +166,51 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
         gamesByMull[numMulls] += 1
         i += 1
     i = 0
+    winsByMullPrinter = ""
     while (i < 8):
         if (gamesByMull[i] == 0):
-            ##print str(i) + ": 0%, " + str(gamesByMull[i])
+            winsByMullPrinter += str(i) + ": 0%, " + str(gamesByMull[i]) + "\n"
             winsByMullRows.append([str(i),"0", gamesByMull[i]])
         else:
-            ##print str(i) + ": " + str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%, " + str(gamesByMull[i])
+            winsByMullPrinter += str(i) + ": " + str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%, " + str(gamesByMull[i]) + "\n"
             winsByMullRows.append([str(i), str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%", gamesByMull[i]])
         i += 1
     regressionModel, newReg, aliasDict = regressionAnalysis(cardDict, handsFromDeck, winLoss, uniqueCards)
     testHand = ['bloodstained mire', 'sacred foundry', 'lingering souls', 'fatal push', 'bedlam reveler', '']
     testHand2 = testHand
     chanceToWin, sciChance = evaluateHand(regressionModel, newReg, testHand, aliasDict)
-    print chanceToWin
-    print sciChance
-    print regressionModel.summary(xname=(["CONSTANT"]+uniqueCards))
-##    writeCSV("percentHands.csv", "wb", ["CARD NAME","% OF KEPT HANDS CONTAINING\n"], commonHandRows)
-##    writeCSV("winPercentHands.csv", "wb", ["CARD NAME","WIN % OF CONTAINING HANDS", "TOTAL # OF HANDS CONTAINED IN", "+/- AVERAGE WIN %\n"], winningHandRows)
-##    writeCSV("mullWinPercent.csv", "wb", ["# OF MULLIGANS TAKEN", "WIN %", "GAMES WITH X MULLIGANS"], winsByMullRows)
+    if (printStuff == True):
+        print "Deck: ".upper() + chosenDeck
+        print "Overall Game Win Percentage: " + str(round(winPercentage, 4)*100) + "%"
+        print "Total Games Played: " + str(len(handsFromDeck))
+        print "\n"
+        print "Cards sorted by % of kept hands that contain them:".upper()
+        for item in commonHandPretty:
+            print item[0] + ": " + str(item[1]) + "%"
+        print "\n"
+        print "Cards sorted by win % of hands that contain them, total # of hands, +/- average win %:".upper()
+        print winningHandsSortedPrinter
+        print "\n"
+        print "% of games with > 0 mulligans:"
+        print round(long(totalMulls) / long(len(handsFromDeck)),4)*100
+        print "\n"
+        print "Win % by # of mulligans, # of games with # of mulligans: "
+        print winsByMullPrinter
+        print chanceToWin
+        print sciChance[0]
+        print regressionModel.summary(xname=(["CONSTANT"]+uniqueCards))
+
+    if (exportStuff == True):
+        writeCSV("percentHands.csv", "wb", ["CARD NAME","% OF KEPT HANDS CONTAINING\n"], commonHandRows)
+        writeCSV("winPercentHands.csv", "wb", ["CARD NAME","WIN % OF CONTAINING HANDS", "TOTAL # OF HANDS CONTAINED IN", "+/- AVERAGE WIN %\n"], winningHandRows)
+        writeCSV("mullWinPercent.csv", "wb", ["# OF MULLIGANS TAKEN", "WIN %", "GAMES WITH X MULLIGANS"], winsByMullRows)
     
     
 def mainFunction():
     chosenDeck = "MARDU PYROMANCER"
     handList = createData("handData.csv", 'rb')
+    printStuff = True
+    exportStuff = False
 
     ##takes all hands of chosenDeck and adds them to handsFromDeck 
     handsFromDeck = []
@@ -213,7 +227,7 @@ def mainFunction():
             if item.upper() not in uniqueCards:
                 if (item != ""):
                     uniqueCards.append(item.upper())
-    printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards)
+    printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards, printStuff, exportStuff)
     
 mainFunction()
     
