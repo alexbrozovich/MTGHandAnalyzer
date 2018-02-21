@@ -21,7 +21,7 @@ def createData(filename, permissions):
 
 def writeCSV(filename, permissions, header, rows_to_write):
     with open(filename, permissions) as csvfile:
-        writer = csv.writer(csvfile, delimiter=",")##, quotechar = "|")##, quoting=csv.QUOTE_MINIMAL)
+        writer = csv.writer(csvfile, delimiter=",")
         writer.writerow(header)
         for item in rows_to_write:
             writer.writerow(item)
@@ -40,9 +40,12 @@ def getWinsLosses(winLoss):
 
 def getHandsWithCards(cardDict, handsFromDeck):
     for line in handsFromDeck:
+        hasCard = 0
+        alreadyFound = []
         for item in line:
-            if (item != ""):
+            if (item != "" and item.upper() not in alreadyFound):
                 cardDict[item.upper()][0] += 1
+                alreadyFound.append(item.upper())
     return cardDict
 
 def getWinsWithCards(cardDict, handsFromDeck, winLoss):
@@ -80,7 +83,6 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     commonHandRows = []
     winningHandRows = []
     winsByMullRows = []
-    ##winningHands = sorted(cardDict.items(), key=operator.itemgetter(0), reverse=True)
     winningHands = {}
     for item in commonHands:
         winningHands[item[0]] = item[1][3]
@@ -93,8 +95,7 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     for item in commonHands:
         commonHandPretty.append([item[0],round(long(item[1][0])/long(len(handsFromDeck)),4)*100])
     for item in commonHandPretty:
-        ##print item[0] + ": " + str(item[1]) + "%"
-        ##commonHandRows.append(item[0] + "," + str(item[1]) + "%\n")
+        print item[0] + ": " + str(item[1]) + "%"
         commonHandRows.append([item[0],str(item[1])+"%\n"])
     print "\n"
     print "Cards sorted by win % of hands that contain them, total # of hands, +/- average win %:".upper()
@@ -105,8 +106,7 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
             plusMinus = "-"
         else:
             plusMinus = "+"
-        ##print item[0] + ": " + str(item[1]) + "%, " + str(cardDict[item[0]][0]) + ", " + plusMinus + str(round(abs(relWin),2)) + "%"
-        ##winningHandRows.append(item[0] + "," + str(item[1]) + "%," + str(cardDict[item[0]][0]) + "," + plusMinus + str(round(abs(relWin),2)) + "%\n")
+        print item[0] + ": " + str(item[1]) + "%, " + str(cardDict[item[0]][0]) + ", " + plusMinus + str(round(abs(relWin),2)) + "%"
         winningHandRows.append([item[0],str(item[1])+"%",str(cardDict[item[0]][0]),plusMinus + str(round(abs(relWin),2))+"%\n"])
     print "\n"
     print "% of games with > 0 mulligans:"
@@ -117,7 +117,7 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
             if item == "":
                  didMull = 1
         totalMulls += didMull
-    ##print round(long(totalMulls) / long(len(handsFromDeck)),4)*100
+    print round(long(totalMulls) / long(len(handsFromDeck)),4)*100
     print "\n"
     print "Win % by # of mulligans, # of games with # of mulligans: "
     winsByMull = [0,0,0,0,0,0,0,0]
@@ -135,10 +135,10 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     i = 0
     while (i < 8):
         if (gamesByMull[i] == 0):
-            ##print str(i) + ": 0%, " + gamesByMull[i]
+            print str(i) + ": 0%, " + str(gamesByMull[i])
             winsByMullRows.append([str(i),"0", gamesByMull[i]])
         else:
-            ##print str(i) + ": " + str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%, " + gamesByMull[i]
+            print str(i) + ": " + str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%, " + str(gamesByMull[i])
             winsByMullRows.append([str(i), str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%", gamesByMull[i]])
         i += 1
     
@@ -148,7 +148,7 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     
     
 def mainFunction():
-    chosenDeck = "MARDU PYROMANCER"
+    chosenDeck = "DREDGE"
     handList = createData("handData.csv", 'rb')
 
     ##takes all hands of chosenDeck and adds them to handsFromDeck 
@@ -165,6 +165,8 @@ def mainFunction():
             if item.upper() not in uniqueCards:
                 if (item != ""):
                     uniqueCards.append(item.upper())
+    for item in uniqueCards:
+        print item
     printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards)
 
 mainFunction()
