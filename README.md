@@ -13,3 +13,4 @@ In the future, I plan to add:
 - Win % in game 1 vs. sideboarded games
 - Statistics for matchups against opponent's archetypes
 - Functionality to have the program be able to make mulligan decisions on its own, given the cards drawn and some parameters about the game situation.
+- Better training for predictions and picking a method of analysis that produces the most accurate results
