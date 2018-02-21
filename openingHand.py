@@ -10,6 +10,10 @@ from sklearn import linear_model
 from scipy import stats
 from matplotlib import pyplot as plt
 
+##takes in the usual stuff
+##returns two different models for regression analysis
+##needs to be split into different methods for different models
+##maybe try argument that determines which of the models is returned?
 def regressionAnalysis(cardDict, handsFromDeck, winLoss, uniqueCards):
     i = 0
     aliasDict = {}
@@ -38,7 +42,11 @@ def regressionAnalysis(cardDict, handsFromDeck, winLoss, uniqueCards):
     reg = linear_model.Lasso()
     reg.fit(OGX, winLossBool)
     return newR, reg, aliasDict
-    
+
+##takes in two models and a hand for evaluation 
+##returns the percentage predictions for the two different models
+##same as regressionAnalysis(), needs to be split up to only return one at a time
+##argument that flags whether the passed model is sklearn or statsmodels
 def evaluateHand(model, scimodel, singleHand, aliasDict):
     currentTranslatedHand = [0] * len(aliasDict)
     for item in singleHand:
@@ -59,6 +67,7 @@ def createData(filename, permissions):
         for row in reader:
             handHolder.append(row)
     return handHolder
+
 
 def writeCSV(filename, permissions, header, rows_to_write):
     with open(filename, permissions) as csvfile:
@@ -92,6 +101,8 @@ def getHandsWithCards(cardDict, handsFromDeck):
                 alreadyFound.append(item.upper())
     return cardDict
 
+##takes in cardDict along with list of hands and wins/losses
+##returns cardDict with win % with hands from that card
 def getWinsWithCards(cardDict, handsFromDeck, winLoss):
     i = 0
     for line in handsFromDeck:
