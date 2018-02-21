@@ -11,4 +11,4 @@ Currently, MTGHandAnalyzer can supply the following information:
 In the future, I plan to add:
 - Statistics for matchups against opponent's archetypes
 - More intelligent predictions based on combinations of cards rather than individual cards
-- Have the program be able to make mulligan decisions on its own, given the cards drawn and some parameters about the game situation.
+- Functionality to have the program be able to make mulligan decisions on its own, given the cards drawn and some parameters about the game situation.
