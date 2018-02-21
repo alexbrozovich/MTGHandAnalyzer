@@ -9,6 +9,7 @@ Currently, MTGHandAnalyzer can supply the following information:
 - The number of times you mulliganed and your win % by the number of mulligans taken
 
 In the future, I plan to add:
+- Win % in game 1 vs. sideboarded games
 - Statistics for matchups against opponent's archetypes
 - More intelligent predictions based on combinations of cards rather than individual cards
 - Functionality to have the program be able to make mulligan decisions on its own, given the cards drawn and some parameters about the game situation.
