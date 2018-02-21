@@ -1,14 +1,65 @@
 from __future__ import division
 import csv
 import operator
-##import numpy as np
-##import statsmodels.api as sm
-##import matplotlib
-##import pandas
-##import itertools
-##from sklearn import linear_model
-##from scipy import stats
-##from matplotlib import pyplot as plt
+import numpy as np
+import statsmodels.api as sm
+import matplotlib
+import pandas
+import itertools
+from sklearn import linear_model
+from scipy import stats
+from matplotlib import pyplot as plt
+
+def regressionAnalysis(cardDict, handsFromDeck, winLoss, uniqueCards):
+    i = 0
+    aliasDict = {}
+    translatedHands = []
+    uniqueCards.append("")
+    winLossBool = []
+    for item in winLoss:
+        if (item.upper() == "WIN" or item.upper() == "WON"):
+            winLossBool.append(1)
+        else:
+            winLossBool.append(0)
+    while (i < len(uniqueCards)):
+           aliasDict[uniqueCards[i].upper()] = i
+           i += 1
+    for line in handsFromDeck:
+        currentTranslatedHand = [0] * len(aliasDict)
+        for item in line:
+            currentTranslatedHand[aliasDict[item.upper()]] += 1
+        translatedHands.append(currentTranslatedHand)
+    newX = np.stack((translatedHands))
+    newX = sm.add_constant(newX)
+    newR = sm.OLS(winLossBool, newX).fit()
+    return newR, aliasDict
+##    print newR.summary(xname=(["Constant"] + uniqueCards))
+##    print newR.params
+##    sampleHand = [0] * len(aliasDict)
+##    sampleHand[2] = 2
+##    sampleHand[3] = 2
+##    sampleHand[4] = 1
+##    sampleHand[6] = 1
+##    sampleHand[7] = 1
+##    i = 0
+##    predictedOutcome = newR.params[0]
+##    while (i < len(sampleHand)):
+##        predictedOutcome += sampleHand[i] * newR.params[i+1]
+##        i += 1
+##    print predictedOutcome
+    
+def evaluateHand(model, singleHand, aliasDict):
+    currentTranslatedHand = [0] * len(aliasDict)
+    for item in singleHand:
+        currentTranslatedHand[aliasDict[item.upper()]] += 1
+    i = 0
+    predictedOutcome = model.params[0]
+    while (i < len(aliasDict)):
+        predictedOutcome += currentTranslatedHand[i] * model.params[i+1]
+        i += 1
+    return predictedOutcome
+    
+           
 
 ##open the csv file with opening hands and create an array from them
 def createData(filename, permissions):
@@ -95,7 +146,7 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     for item in commonHands:
         commonHandPretty.append([item[0],round(long(item[1][0])/long(len(handsFromDeck)),4)*100])
     for item in commonHandPretty:
-        print item[0] + ": " + str(item[1]) + "%"
+        ##print item[0] + ": " + str(item[1]) + "%"
         commonHandRows.append([item[0],str(item[1])+"%\n"])
     print "\n"
     print "Cards sorted by win % of hands that contain them, total # of hands, +/- average win %:".upper()
@@ -106,7 +157,7 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
             plusMinus = "-"
         else:
             plusMinus = "+"
-        print item[0] + ": " + str(item[1]) + "%, " + str(cardDict[item[0]][0]) + ", " + plusMinus + str(round(abs(relWin),2)) + "%"
+        ##print item[0] + ": " + str(item[1]) + "%, " + str(cardDict[item[0]][0]) + ", " + plusMinus + str(round(abs(relWin),2)) + "%"
         winningHandRows.append([item[0],str(item[1])+"%",str(cardDict[item[0]][0]),plusMinus + str(round(abs(relWin),2))+"%\n"])
     print "\n"
     print "% of games with > 0 mulligans:"
@@ -135,20 +186,23 @@ def printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards):
     i = 0
     while (i < 8):
         if (gamesByMull[i] == 0):
-            print str(i) + ": 0%, " + str(gamesByMull[i])
+            ##print str(i) + ": 0%, " + str(gamesByMull[i])
             winsByMullRows.append([str(i),"0", gamesByMull[i]])
         else:
-            print str(i) + ": " + str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%, " + str(gamesByMull[i])
+            ##print str(i) + ": " + str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%, " + str(gamesByMull[i])
             winsByMullRows.append([str(i), str(round(float(winsByMull[i])/float(gamesByMull[i]),4)*100) + "%", gamesByMull[i]])
         i += 1
-    
-    writeCSV("percentHands.csv", "wb", ["CARD NAME","% OF KEPT HANDS CONTAINING\n"], commonHandRows)
-    writeCSV("winPercentHands.csv", "wb", ["CARD NAME","WIN % OF CONTAINING HANDS", "TOTAL # OF HANDS CONTAINED IN", "+/- AVERAGE WIN %\n"], winningHandRows)
-    writeCSV("mullWinPercent.csv", "wb", ["# OF MULLIGANS TAKEN", "WIN %", "GAMES WITH X MULLIGANS"], winsByMullRows)
+    regressionModel, aliasDict = regressionAnalysis(cardDict, handsFromDeck, winLoss, uniqueCards)
+    testHand = ['bloodstained mire', 'sacred foundry', 'lingering souls', 'fatal push', 'bedlam reveler', '']
+    chanceToWin = evaluateHand(regressionModel, testHand, aliasDict)
+    print chanceToWin
+##    writeCSV("percentHands.csv", "wb", ["CARD NAME","% OF KEPT HANDS CONTAINING\n"], commonHandRows)
+##    writeCSV("winPercentHands.csv", "wb", ["CARD NAME","WIN % OF CONTAINING HANDS", "TOTAL # OF HANDS CONTAINED IN", "+/- AVERAGE WIN %\n"], winningHandRows)
+##    writeCSV("mullWinPercent.csv", "wb", ["# OF MULLIGANS TAKEN", "WIN %", "GAMES WITH X MULLIGANS"], winsByMullRows)
     
     
 def mainFunction():
-    chosenDeck = "DREDGE"
+    chosenDeck = "MARDU PYROMANCER"
     handList = createData("handData.csv", 'rb')
 
     ##takes all hands of chosenDeck and adds them to handsFromDeck 
@@ -165,10 +219,8 @@ def mainFunction():
             if item.upper() not in uniqueCards:
                 if (item != ""):
                     uniqueCards.append(item.upper())
-    for item in uniqueCards:
-        print item
     printStats(chosenDeck, handsFromDeck, winLoss, uniqueCards)
-
+    
 mainFunction()
     
 
